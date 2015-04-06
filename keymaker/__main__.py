@@ -75,7 +75,6 @@ def run_keymaker(group):
     pass
 
 
-#this has to be a daemon that runs indefinitely
 @click.command()
 @click.argument('group')
 def main(group):

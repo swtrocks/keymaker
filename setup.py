@@ -17,6 +17,6 @@ setup(
     install_requires=requirements,
     entry_points= """
         [console_scripts]
-        keymaker=keymaker.__main__:keymaker
+        keymaker=keymaker.__main__:main
     """
 )
