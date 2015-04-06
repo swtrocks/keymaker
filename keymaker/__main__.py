@@ -4,6 +4,7 @@ import os
 import time
 import asyncio
 import boto
+import boto.utils
 
 from datetime import datetime
 from daemon import runner
@@ -12,8 +13,15 @@ from daemon import runner
 class Keymaker():
     def __init__(self):
         self.group = None
+        self.iam_role = None
         self.group_list = None
         self.pubkey_list = None
+
+    # get the iam role of the current instance
+    def get_iam_role(self):
+        inst_metadata = boto.utils.get_instance_metadata()
+        iam_role = [role for role in inst_metadata['iam']['security-credentials']][0]
+        return iam_role
 
     # get the list of users from the iam group
     def get_users_list(self):
@@ -60,6 +68,10 @@ def run_keymaker(group):
     while True:
         keymaker = Keymaker()
         keymaker.group=group
+
+        # find out which iam group should have access to this box
+        # can listen on a queue
+        keymaker.iam_role = keymaker.get_iam_role()
 
         # get the emails from the iam group
         # first check if group exists
