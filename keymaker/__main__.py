@@ -11,7 +11,7 @@ from datetime import datetime
 from daemon import runner
 
 LOG = logging.getLogger(__name__)
-logging.basicConfig(filename='/var/log/keymaker/keymakerlog.log', level=logging.ERROR)
+logging.basicConfig(filename='/var/log/keymaker/keymakerlog.log', level=logging.DEBUG)
 
 ssh_dir = '/home/scopely/.ssh'
 authorized_keys_path = '/home/scopely/.ssh/authorized_keys'
@@ -102,10 +102,10 @@ def run_keymaker():
         res_paths = keymaker.create_paths()
         res_add = keymaker.add_keys()
 
-        print('iam role: {}'.format(keymaker.iam_role))
-        print('group name: {}'.format(keymaker.group_name))
-        print('user list: {}'.format(keymaker.user_list))
-        print('pubkey list: {}'.format(keymaker.pubkey_list))
+        LOG.debug('iam role: {}'.format(keymaker.iam_role))
+        LOG.debug('group name: {}'.format(keymaker.group_name))
+        LOG.debug('user list: {}'.format(keymaker.user_list))
+        LOG.debug('pubkey list: {}'.format(keymaker.pubkey_list))
 
         time.sleep(5)
     pass
