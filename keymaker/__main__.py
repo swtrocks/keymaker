@@ -13,12 +13,15 @@ from daemon import runner
 LOG = logging.getLogger(__name__)
 logging.basicConfig(filename='/var/log/keymaker/keymakerlog.log', level=logging.ERROR)
 
+ssh_dir = '/home/scopely/.ssh'
+authorized_keys_path = '/home/scopely/.ssh/authorized_keys'
+pubkey_table = 'AA_Keys'
 
 class Keymaker():
     def __init__(self):
         self.iam_role = None
         self.group_name = None
-        self.group_list = None
+        self.user_list= None
         self.pubkey_list = None
 
     # get the iam role of the current instance
@@ -41,19 +44,19 @@ class Keymaker():
 
     # get the list of users from the iam group
     def get_users_list(self):
-        group_list = []
+        user_list = []
         conn = boto.connect_iam()
         g = conn.get_group(self.group_name)
         for user in g.users:
-            group_list.append(user.user_name)
-        return group_list
+            user_list.append(user.user_name)
+        return user_list
 
     # returns a list of pubkeys
     def get_all_pubkeys(self):
         pubkey_list = []
         conn = boto.connect_dynamodb()
-        table = conn.get_table('AA_Keys')
-        for username in self.group_list:
+        table = conn.get_table(pubkey_table)
+        for username in self.user_list:
             item = table.get_item(username)
             pubkey_list.append(item['pubkey'])
         return pubkey_list
@@ -62,18 +65,18 @@ class Keymaker():
     # make sure that /home/scopely/.ssh/authorized_keys exists
     def create_paths(self):
         try:
-            os.makedirs('/home/scopely/.ssh/', exist_ok=True)
-            os.chmod('/home/scopely/.ssh/', 0o700)
+            os.makedirs(ssh_dir, exist_ok=True)
+            os.chmod(ssh_dir, 0o700)
             return True
         except OSError:
             raise
 
     def add_keys(self):
         try:
-            with open('/home/scopely/.ssh/authorized_keys', 'w') as f:
+            with open(authorized_keys_path, 'w') as f:
                 for key in self.pubkey_list:
                     f.write(key + "\n\n")
-                    os.chmod('/home/scopely/.ssh/authorized_keys', 0o600)
+                    os.chmod(authorized_keys_path, 0o600)
             return True
         except OSError:
             raise
@@ -91,7 +94,7 @@ def run_keymaker():
 
         # get the emails from the iam group
         # first check if group exists
-        keymaker.group_list = keymaker.get_users_list()
+        keymaker.user_list = keymaker.get_users_list()
 
         # for each username in the list, query dynamo table for the public key
         keymaker.pubkey_list = keymaker.get_all_pubkeys()
@@ -101,7 +104,7 @@ def run_keymaker():
 
         print('iam role: {}'.format(keymaker.iam_role))
         print('group name: {}'.format(keymaker.group_name))
-        print('group list: {}'.format(keymaker.group_list))
+        print('user list: {}'.format(keymaker.user_list))
         print('pubkey list: {}'.format(keymaker.pubkey_list))
 
         time.sleep(5)
